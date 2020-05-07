@@ -105,3 +105,24 @@ So in order to grant our Lambda the right permission, we provide the following:
 ```
 
 In the above, we grant the lambda `s3:PutObject` for the bucket, but also access to the KMS encryption key. For this, we reference the key alias of the default S3 CMK (aws/s3), but you can swap that out for any alias or key you wish. We also use the `Ref: AWS::AccountId` to make our code more generic, but also allows me to now paste my account id on GitHub repos :)
+
+# Getting the big file
+
+By default, the lambda will try to download a ~10MB file from wikipedia, this is mostly for testing purposes. The file is downloaded in chunks of 5MB (the smallest chunk size possible), and multi-part uploaded to S3.
+
+For a larger file, we can use the following command for serverless framework:
+
+    $ sls invoke -f download_big_file -d '{"url":"https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/index.json", "chunk_size": 256}'
+
+This downloads a ~1.3GB file from aws in us-east-1 (hence why I default the region to us-east-1), totally in memory, via multi-part upload with parts of size 256. The operation typically takes 20-30 seconds to complete, and the final result is the 1.3GB file in your S3 bucket (with default KMS encryption turned on)
+
+# Uninstall
+
+To uninstall
+
+    $ cd serverless
+    $ serverless remove
+    $ cd terraform
+    $ terraform destroy
+
+Nothing will be left in your account! :)
