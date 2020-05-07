@@ -2,7 +2,7 @@
 
 Lambda functions (regardless of size) have 512MB of disk space in the `/tmp` directory. Which means downloading and uploading files less than 512MB is a simple task.
 
-But what if you need more? In this repo, we'll show you how to download a 1.3GB file into an S3 bucket using lambda.
+But what if you need more? In this repo, we'll show you how to download a 1.3GB file into an S3 bucket using lambda. The solution can be expanded to files of nearly any size, provided the lambda has sufficient time to download it.
 
 # Setup
 
@@ -38,11 +38,11 @@ Now, once we setup everything -- we'll have:
 
 # How it works
 
-As mentioned lambda only has 512MB of space on disk, so we have two options, download the file to memory (which can be expanded to 3008MB) or download the file incrementally in chunks.
+Lambda only has 512MB of space on disk, so we have two options, download the file to memory (which can be expanded to 3008MB) or download the file incrementally in chunks.
 
-We choose the chunk option, effectively downloading x MB at a time, and using s3 multipart upload to upload the files to in chunks to S3. We then complete the multi-part upload, and voila, our small lambda can downloads Gigabytes from the internet, and store it in S3.
+We choose the chunk option, effectively downloading in chunks at a time, and using s3 multipart upload to upload those chunks to S3. We then complete the multi-part upload, and voila, our small lambda can downloads Gigabytes from the internet, and store it in S3.
 
-The real magic comes from this bit of code, which uses the Python Requests library, to download the file from the internet in chunks, and for every chunks uploads it as a 'part' to S3. This way, the lambda only has to support the size of the part, and not the entire file.
+The real magic comes from this bit of code, which uses the Python Requests library, to download stream the file in configurable sized chunks, and for every chunks upload it as a 'part' to S3. This way, the lambda only has to support the size of the part at the time, and not the entire file.
 
 ```python
 def download_and_upload(url, upload_id, key, bucket, chunk_size_in_MB):
@@ -104,7 +104,7 @@ So in order to grant our Lambda the right permission, we provide the following:
           - alias/aws/s3 #default aws/S3 key
 ```
 
-In the above, we grant the lambda `s3:PutObject` for the bucket, but also access to the KMS encryption key. For this, we reference the key alias of the default S3 CMK (aws/s3), but you can swap that out for any alias or key you wish. We also use the `Ref: AWS::AccountId` to make our code more generic, but also allows me to now paste my account id on GitHub repos :)
+In the above, we grant the lambda `s3:PutObject` for the bucket, but also access to the KMS encryption key. For this, we reference the key alias of the default S3 CMK (aws/s3), but you can swap that out for any alias or key you wish.
 
 # Getting the big file
 
