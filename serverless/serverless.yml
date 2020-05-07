@@ -1,0 +1,43 @@
+service: multipart-upload
+
+provider:
+  name: aws
+  region: ${self:custom.region}
+  runtime: python3.8
+  iamRoleStatements:
+  - Effect: Allow
+    Action: s3:PutObject
+    Resource: ${ssm:${self:custom.ssm_prefix}/${self:custom.bucket_logical_name}/arn}/*
+  - Effect: Allow
+    Action:
+      - kms:Encrypt
+      - kms:Decrypt
+      - kms:ReEncrypt*
+      - kms:GenerateDataKey*
+      - kms:DescribeKey
+    Resource:
+      Fn::Join:
+        - ":"
+        - - arn:aws:kms
+          - ${self:provider.region}  
+          - Ref: AWS::AccountId
+          - alias/aws/s3 #default aws/S3 key
+
+custom:
+  region: ${file(../terraform/terraform.tfvars.json):aws_region}
+  bucket_logical_name: ${file(../terraform/terraform.tfvars.json):bucket_logical_name}
+  ssm_prefix: ${file(../terraform/terraform.tfvars.json):ssm_prefix}
+  bucket_name: ${ssm:${self:custom.ssm_prefix}/${self:custom.bucket_logical_name}/name}
+
+functions:
+  download_big_file:
+    handler: handler.handler
+    memorySize: 1792
+    timeout: 120
+    layers:
+      - arn:aws:lambda:us-east-1:770693421928:layer:Klayers-python38-requests:5
+      - arn:aws:lambda:us-east-1:770693421928:layer:Klayers-python38-aws-lambda-powertools:21
+    environment:
+      BUCKET_NAME: ${self:custom.bucket_name}
+      LOG_LEVEL: INFO
+      POWERTOOLS_SERVICE_NAME: multipart_upload
