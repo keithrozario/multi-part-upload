@@ -73,8 +73,6 @@ def download_and_upload(url, upload_id, key, bucket, chunk_size_in_MB):
 
 # KMS Encryption
 
-It annoys me, that AWS typically run 'hello-world' examples on their blog, which unfortunately get copied lock-stock n' barrel into people's production environment.
-
 KMS encryption for S3 is pretty straightforward, and should be the default setting for all your production buckets.
 
 But KMS encryption with multi-part upload is a slightly different beast, as it requires additional permissions, as can be gleaned from the boto3 documentation:
